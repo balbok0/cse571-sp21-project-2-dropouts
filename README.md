@@ -26,5 +26,20 @@ pip install 'ray[default]'
 # Get missing maps from duckietown repo
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/small_loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
-
 ```
+### Optional: Install Tensorboard (useful for visualizing training progression)
+```
+pip install tensorflow tensorboard
+```
+
+## Checking setup
+If everything got installed properly
+```
+python examples/discrete_dqn.py
+```
+
+If you also installed tensorboard running:
+```
+tensorboard --logdir=~/ray_results
+```
+Will provide insights into training.

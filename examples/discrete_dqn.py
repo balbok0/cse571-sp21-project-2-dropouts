@@ -1,4 +1,5 @@
 from gym_duckietown.envs.multimap_env import MultiMapEnv
+from gym_duckietown.wrappers import PyTorchObsWrapper, SteeringToWheelVelWrapper, DiscreteWrapper
 import ray
 from ray.tune.registry import register_env
 from ray.rllib.agents.impala import ImpalaTrainer
@@ -12,38 +13,49 @@ from torch import nn
 class ImageCritic(nn.Module):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self.block1 = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Conv2d(3, 8, 3),
             nn.Conv2d(8, 16, 3),
             nn.Conv2d(16, 32, 3),
             nn.MaxPool2d(2),
             nn.ReLU(),
-        )
-        self.block2 = nn.Sequential(
             nn.Conv2d(32, 32, 3),
             nn.MaxPool2d(2),
             nn.ReLU(),
-        )
-        self.block3 = nn.Sequential(
             nn.Conv2d(32, 32, 3),
             nn.MaxPool2d(2),
             nn.ReLU(),
-        )
-        self.linear = nn.Sequential(
+            nn.Conv2d(32, 32, 3),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(666, 64),
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(64, 2),
+            nn.Linear(64, 1),
+        )
+        self.agent = nn.Sequential(
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 256),
         )
 
     def forward(self, x):
-        # (N, H, W, C) -> (N, C, H, W)
-        x = torch.moveaxis(x, 3, 1).float()
-        x = self.block1(x)
-        x = self.block2(x)
-        x = self.block3(x)
-        return self.linear(x) * 2 - 1
-
+        x = x.transpose(3, 1).float()
+        x = self.common(x)
+        a = self.agent(x)
+        v = self.critic(x)
+        return a * 2 - 1, v
 
 
 class RLLibDQNCritic(TorchModelV2, nn.Module):
@@ -52,26 +64,34 @@ class RLLibDQNCritic(TorchModelV2, nn.Module):
         nn.Module.__init__(self)
 
         self.base_model = ImageCritic()
+        self._value = None
 
     def forward(self, input_dict, state, seq_lens):
-        model_out = self.base_model(input_dict["obs"])
+        model_out, self._value = self.base_model(input_dict["obs"])
         return model_out, state
+
+    def value_function(self):
+        return self._value
 
 # Start ray
 ray.init()
 
 ModelCatalog.register_custom_model("image-dqn", RLLibDQNCritic)
-register_env("DuckieTown-MultiMap", lambda _: MultiMapEnv())
+register_env("DuckieTown-MultiMap", lambda _: DiscreteWrapper(MultiMapEnv()))
 
-trainer = ImpalaTrainer(
+
+trainer = DQNTrainer(
     env="DuckieTown-MultiMap",
     config={
         "framework": "torch",
         "model": {
             "custom_model": "image-dqn",
         },
+        "learning_starts": 0,
+        # "record_env": True,  # Doing this allows us to record images from the DuckieTown Gym! Might be useful for report.
     }
 )
 
-result = trainer.train()
-print(result)
+for _ in range(10):  # Number of epochs
+    result = trainer.train()
+    print(result)
