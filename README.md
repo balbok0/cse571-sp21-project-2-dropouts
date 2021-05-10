@@ -53,3 +53,9 @@ If you also installed tensorboard running:
 tensorboard --logdir=~/ray_results
 ```
 Will provide insights into training.
+
+## Colab Training
+
+There is an included notebook which can be imported to Colab to train using GPU, see `colab_notebook.ipynb`.
+
+The notebook is also accessible here: https://colab.research.google.com/drive/1FJm_wAT3DyYX4pQMVrsUJXPdNZ06M1TZ?usp=sharing
