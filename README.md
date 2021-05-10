@@ -2,6 +2,7 @@
 
 ## Setup
 
+### Conda
 ```
 # Create conda environment
 conda create -n robotics-project python=3.8
@@ -26,10 +27,19 @@ pip install 'ray[default]'
 # Get missing maps from duckietown repo
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/small_loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
-```
-### Optional: Install Tensorboard (useful for visualizing training progression)
-```
+
+# Optional: Install Tensorboard (useful for visualizing training progression)
 pip install tensorflow tensorboard
+```
+
+### Virtualenv
+```
+mkvirtualenv -p python3.8 project2_dropouts
+
+pip install -r requirements.txt
+
+wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/loop_only_duckies.yaml -P $VIRTUAL_ENV/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
+wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/small_loop_only_duckies.yaml -P /$VIRTUAL_ENV/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 ```
 
 ## Checking setup

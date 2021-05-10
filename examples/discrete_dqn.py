@@ -110,10 +110,12 @@ trainer = DQNTrainer(
         },
         "learning_starts": 0,
         # "record_env": True,  # Doing this allows us to record images from the DuckieTown Gym! Might be useful for report.
+        "train_batch_size": 15,  # Default is 32 but that uses too much memory in Colab
     }
 )
 
-for _ in range(10):  # Number of episodes (basically epochs)
+for i in range(10):  # Number of episodes (basically epochs)
+    print(f'----------------------- Starting epoch {i} ----------------------- ')
     # train() trains only a single episode
     result = trainer.train()
     print(result)
