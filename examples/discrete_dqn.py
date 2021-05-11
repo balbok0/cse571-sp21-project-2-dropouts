@@ -137,12 +137,17 @@ def evaluate_model(args):
         print('Cannot evaluate model, no --model_path set')
         exit(1)
 
+    def get_env():
+        # Simulator env uses a single map, so better for evaluation/testing.
+        # DiscreteWrapper just converts wheel velocities to high level discrete actions.
+        return DiscreteWrapper(simulator.Simulator(
+            map_name=args.map,
+            max_steps=2000,
+        ))
+
     # Rather than reuse the env, another one is created later because I can't
     # figure out how to provide register_env with an object, th
-    register_env('DuckieTown-Simulator', lambda _: DiscreteWrapper(simulator.Simulator(
-        map_name=args.map,
-        max_steps=2000,
-    )))
+    register_env('DuckieTown-Simulator', lambda _: get_env())
     trainer = DQNTrainer(
         env="DuckieTown-Simulator",
         config={
@@ -154,12 +159,7 @@ def evaluate_model(args):
     )
     trainer.restore(args.model_path)
 
-    # Simulator env uses a single map, so better for evaluation/testing.
-    # DiscreteWrapper just converts wheel velocities to high level discrete actions.
-    sim_env = DiscreteWrapper(simulator.Simulator(
-        map_name=args.map,
-        max_steps=2000,
-    ))
+    sim_env = get_env()
 
     # Standard OpenAI Gym reset/action/step/render loop.
     # This matches how the `enjoy_reinforcement.py` script works, see: https://git.io/J3js2
