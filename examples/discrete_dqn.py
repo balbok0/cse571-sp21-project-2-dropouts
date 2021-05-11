@@ -122,8 +122,14 @@ def train_model(args):
         result = trainer.train()
         print(result)
 
-    checkpoint_path = trainer.save()
-    print(f'Saved final model at: {checkpoint_path}')
+        # Save model so far.
+        checkpoint_path = trainer.save()
+        print(f'Epoch {i}, checkpoint saved at: {checkpoint_path}')
+
+        # Cleanup CUDA memory to reduce memory usage.
+        torch.cuda.empty_cache()
+        # Debug log to monitor memory.
+        print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
 
 def evaluate_model(args):
