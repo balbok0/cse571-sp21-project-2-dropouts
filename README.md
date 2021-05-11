@@ -59,3 +59,29 @@ Will provide insights into training.
 There is an included notebook which can be imported to Colab to train using GPU, see `colab_notebook.ipynb`.
 
 The notebook is also accessible here: https://colab.research.google.com/drive/1FJm_wAT3DyYX4pQMVrsUJXPdNZ06M1TZ?usp=sharing
+
+## Evaluation
+
+We don't yet have graphing and support for quantitative evaluation. Evaluation should be done locally if you are rendering the simulator, though you can add support to ignore rendering for cloud evaluation.
+
+To evaluate a trained model (only DQN supported right now) look at the available flags:
+```
+$ python examples/discrete_dqn.py -h
+
+usage: discrete_dqn.py [-h] [--eval] [--epochs EPOCHS] [--model_path MODEL_PATH] [--map MAP]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --eval                Evaluate model instead of train
+  --epochs EPOCHS       Num of epochs to train for
+  --model_path MODEL_PATH
+                        Location to pre-trained model
+  --map MAP             Which map to evaluate on, see https://git.io/J3jES
+```
+
+For example we can train on the default map using the provided baseline model with:
+```
+$ python examples/discrete_dqn.py --eval --model_path trained_models/dqn_v0/model
+```
+
+The baseline model is terrible, you should see it go around in circles slowly.
