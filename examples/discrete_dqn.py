@@ -112,7 +112,7 @@ def train_model(args):
             },
             "learning_starts": 1000,
             # "record_env": True,  # Doing this allows us to record images from the DuckieTown Gym! Might be useful for report.
-            "train_batch_size": 32,
+            "train_batch_size": 16,
             # Use a very small buffer to reduce memory usage, default: 50_000.
             "buffer_size": 2000,
             # Don't save experiences.
