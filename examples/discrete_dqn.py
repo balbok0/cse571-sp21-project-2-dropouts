@@ -122,6 +122,10 @@ def train_model(args):
         }
     )
 
+    # Start training from a checkpoint, if available.
+    if args.model_path:
+        trainer.restore(args.model_path)
+
     for i in range(args.epochs):  # Number of episodes (basically epochs)
         print(f'----------------------- Starting epoch {i} ----------------------- ')
         # train() trains only a single episode
