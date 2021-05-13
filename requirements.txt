@@ -37,6 +37,7 @@ frozendict==2.0.2
 future==0.18.2
 gast==0.3.3
 gltflib==1.0.8
+google==3.0.0
 google-api-core==1.26.3
 google-auth==1.30.0
 google-auth-oauthlib==0.4.4
@@ -78,7 +79,7 @@ opt-einsum==3.3.0
 oyaml==1.0
 packaging==20.9
 pandas==1.2.4
-Pillow==8.1.1
+Pillow==7.2.0
 plotly==4.14.3
 prometheus-client==0.10.1
 protobuf==3.16.0
@@ -127,6 +128,7 @@ termcolor==1.1.0
 tifffile==2021.4.8
 torch==1.8.1
 torchvision==0.9.1
+tqdm==4.60.0
 trimesh==3.9.15
 typed-ast==1.4.3
 typing-extensions==3.7.4.3
