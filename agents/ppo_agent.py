@@ -62,14 +62,15 @@ class ImageCritic(nn.Module):
         self.agent = nn.Sequential(
             nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(64, 3),
+            nn.Linear(64, 2),
         )
 
     def forward(self, x):
-        x = x.transpose(3, 1).float()
+        # Normalize images to -1, 1
+        x = (x.transpose(3, 1).float() / 255. - 0.5) * 2
         x = self.common(x)
         a = self.agent(x)
-        v = self.critic(x)
+        v = self.critic(x).view(-1)
         return a, v
 
 
