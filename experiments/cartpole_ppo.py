@@ -4,6 +4,8 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from torch import nn
 
+import plotter
+
 
 class ImageCritic(nn.Module):
     def __init__(self):
@@ -35,7 +37,7 @@ class ImageCritic(nn.Module):
         x = x.float()
         x = self.common(x)
         a = self.agent(x)
-        v = self.critic(x)
+        v = self.critic(x).view(-1)
         return a, v
 
 
@@ -57,7 +59,6 @@ class RLLibPPOCritic(TorchModelV2, nn.Module):
         return model_out, state
 
     def value_function(self):
-        print(self._value.shape)
         return self._value
 
 
@@ -74,4 +75,9 @@ trainer = PPOTrainer(
     }
 )
 
-trainer.train()
+plot = plotter.Plotter('ppo_cartpole')
+for epoch in range(10):
+    results = trainer.train()
+    plot.add_results(results)
+
+plot.plot(title='PPO CartPole-v0')
