@@ -219,8 +219,10 @@ if __name__ == '__main__':
                 header=not os.path.exists(csv_path)
             )
         except RuntimeError as e:
-            raise e
-            # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it a minute.
-            time.sleep(60)
+            if str(e).startswith("RuntimeError: CUDA out of memory."):
+                # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it a minute.
+                time.sleep(60)
+            else:
+                raise e
         finally:
             torch.cuda.empty_cache()
