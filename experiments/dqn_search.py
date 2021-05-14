@@ -1,113 +1,32 @@
-import logging
-logging.basicConfig(filename='search.log', level=logging.CRITICAL)
-
-
 import argparse
-from typing import List
 
-from gym_duckietown import simulator
 from gym_duckietown.envs.multimap_env import MultiMapEnv
-from gym_duckietown.wrappers import PyTorchObsWrapper, SteeringToWheelVelWrapper, DiscreteWrapper
+from gym_duckietown.wrappers import DiscreteWrapper
 import ray
 from ray.tune.registry import register_env
 from ray.rllib.agents.dqn import DQNTrainer
 from ray.rllib.models import ModelCatalog
-from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
-from torch import nn
 import numpy as np
-
-import pandas as pd
 import os
-from tqdm import trange
 import time
+from tqdm import trange
+import pandas as pd
+from dropouts_project import ImageCritic, RLLibTorchModel
 
 
-class ImageCritic(nn.Module):
-    def __init__(self):
-        """CNN that does the predictions.
-        Data from is as follows:
-
-                           > agent(x) -> a (R^256)
-                          /
-            x -> common(x)
-                         |
-                         L> critic(x) -> c (R)
-
-        The reason for sharing common part is because images are large so that many Conv's is quite expensive.
-        Also predicting value of a state and predicting next action to take is quite similar, and many papers use this approach.
-        """
-        super(self.__class__, self).__init__()
-        self.common = nn.Sequential(
-            nn.Conv2d(3, 8, 3),
-            nn.Conv2d(8, 16, 3),
-            nn.MaxPool2d(4),
-            nn.ReLU(),
-            nn.Conv2d(16, 32, 3),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            nn.Conv2d(32, 32, 3),
-            nn.MaxPool2d(4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, 3),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, 3),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
-        self.critic = nn.Sequential(
-            nn.Linear(384, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1),
-        )
-        self.agent = nn.Sequential(
-            nn.Linear(384, 64),
-            nn.ReLU(),
-            nn.Linear(64, 3),
-        )
-
-    def forward(self, x):
-        # x = torch.tensor(x.transpose(3, 1), dtype=torch.float16)
-        # x -> (N, C, H, W) with range [-1, 1]
-        x = (x.transpose(3, 1).float() / 255. - 0.5) * 2
-        x = self.common(x)
-        a = self.agent(x)
-        v = self.critic(x)
-        return a, v
-
-
-# model = ImageCritic().to("cuda")
-# print(f"Number elements: {sum([p.numel() for p in model.parameters()])}")
-# exit(0)
-
-class RLLibDQNCritic(TorchModelV2, nn.Module):
-    """
-    This is basically a wraper around ImageCritic that satisfies requirements of rllib.
-    """
-
-    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
-        TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
-        nn.Module.__init__(self)
-
-        self.base_model = ImageCritic()
-        self._value = None
-
-    def forward(self, input_dict, state, seq_lens):
-        # Structure of this forward is due to TorchModelV2.
-        # Note that we do not immediately return value, but rather save it for `value_function`
-        model_out, self._value = self.base_model(input_dict["obs"])
-        return model_out, state
-
-    def value_function(self):
-        return self._value
+class RLLibDQNCritic(RLLibTorchModel):
+    @staticmethod
+    def base_model_generator():
+        return ImageCritic(3, 1)
 
 
 def train_model(args, config):
     # Define trainer. Apart from env, config/framework and config/model, which are common among trainers.
-    # Here is a list of default config keys/values: https://docs.ray.io/en/master/rllib-training.html#common-parameters
-    # For DQN specifically there are also additionally these keys: https://docs.ray.io/en/master/rllib-algorithms.html#dqn
+    # Here is a list of default config keys/values:
+    # https://docs.ray.io/en/master/rllib-training.html#common-parameters
+    # For DQN specifically there are also additionally these keys:
+    # https://docs.ray.io/en/master/rllib-algorithms.html#dqn
     trainer = DQNTrainer(
         env="DuckieTown-MultiMap",
         config=config,
@@ -135,7 +54,6 @@ def train_model(args, config):
             best_mean_reward = result["episode_reward_mean"]
             epoch_of_best_mean_reward = i
             path_of_best_mean_reward = checkpoint_path
-
 
         # Cleanup CUDA memory to reduce memory usage.
         torch.cuda.empty_cache()
@@ -184,7 +102,7 @@ if __name__ == '__main__':
                 "custom_model": "image-dqn",
             },
             "learning_starts": 500,
-            # "record_env": True,  # Doing this allows us to record images from the DuckieTown Gym! Might be useful for report.
+            # "record_env": True,  # Doing this allows us to record images from the DuckieTown Gym! Might be useful for report.  # noqa: E501
             "train_batch_size": 16,
             # Use a very small buffer to reduce memory usage, default: 50_000.
             "buffer_size": 1000,
@@ -232,8 +150,11 @@ if __name__ == '__main__':
                 mode="a" if os.path.exists(csv_path) else "w",
                 header=not os.path.exists(csv_path)
             )
-        except RuntimeError:
-            # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it few seconds.
-            time.sleep(5)
+        except RuntimeError as e:
+            if str(e).startswith("RuntimeError: CUDA out of memory."):
+                # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it a minute.
+                time.sleep(20)
+            else:
+                raise e
         finally:
             torch.cuda.empty_cache()

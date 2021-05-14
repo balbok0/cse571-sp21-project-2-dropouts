@@ -13,7 +13,8 @@ class ImageCritic(nn.Module):
                          L> critic(x) -> c (R^{critic_out})
 
         The reason for sharing common part is because images are large so that many Conv's is quite expensive.
-        Also predicting value of a state and predicting next action to take is quite similar, and many papers use this approach.
+        Also predicting value of a state and predicting next action to take is quite similar,
+        and many papers use this approach.
         """
         super(self.__class__, self).__init__()
         self.common = nn.Sequential(

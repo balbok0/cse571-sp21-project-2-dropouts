@@ -1,5 +1,5 @@
 import argparse
-from dropouts_project.models.torch_model_to_rllib import RLLibTorchModel
+from gym_duckietown import simulator
 from gym_duckietown.envs.multimap_env import MultiMapEnv
 import ray
 from ray.tune.registry import register_env
@@ -162,7 +162,7 @@ if __name__ == '__main__':
             "num_gpus": 0.66,
             "log_level": "ERROR",
         }
-        
+
         additional_params = {}
 
         lr = 10 ** np.random.uniform(-5, -2.5)
@@ -195,7 +195,7 @@ if __name__ == '__main__':
         except RuntimeError as e:
             if str(e).startswith("RuntimeError: CUDA out of memory."):
                 # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it a minute.
-                time.sleep(60)
+                time.sleep(20)
             else:
                 raise e
         finally:

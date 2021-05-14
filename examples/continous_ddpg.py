@@ -1,5 +1,6 @@
 import argparse
 
+from gym_duckietown import simulator
 from gym_duckietown.envs.multimap_env import MultiMapEnv
 import ray
 from ray.tune.registry import register_env
@@ -18,11 +19,11 @@ class DDPGRLLibModel(RLLibTorchModel):
 
 
 def train_model(args):
-   # Define trainer. Apart from env, config/framework and config/model, which are common among trainers.
-   # Here is a list of default config keys/values:
-   #    https://docs.ray.io/en/master/rllib-training.html#common-parameters
-   # For DDPG specifically there are also additionally these keys:
-   #    https://docs.ray.io/en/master/rllib-algorithms.html#ddpg
+    # Define trainer. Apart from env, config/framework and config/model, which are common among trainers.
+    # Here is a list of default config keys/values:
+    #    https://docs.ray.io/en/master/rllib-training.html#common-parameters
+    # For DDPG specifically there are also additionally these keys:
+    #    https://docs.ray.io/en/master/rllib-algorithms.html#ddpg
     trainer = DDPGTrainer(
         env="DuckieTown-MultiMap",
         config={
@@ -31,7 +32,6 @@ def train_model(args):
                 "custom_model": "image-ddpg",
             },
             "learning_starts": 0,
-            "num_gpus": args.gpu_use,
             "train_batch_size": 16,
         }
     )
@@ -69,7 +69,7 @@ def evaluate_model(args):
         # Simulator env uses a single map, so better for evaluation/testing.
         # return SteeringToWheelVelWrapper(DuckietownLF(
         # ))
-        return SteeringToWheelVelWrapper(simulator.Simulator(
+        return MultiMapSteeringToWheelVelWrapper(simulator.Simulator(
             map_name=args.map,
             max_steps=2000,
         ))
@@ -116,7 +116,6 @@ def get_parser():
     parser.add_argument('--map', default='loop_empty', help='Which map to evaluate on, see https://git.io/J3jES')
     # Looks like, e.g. `DQN_DuckieTown-MultiMap_2021-05-10_20-43-32ndgfiq44/checkpoint_000009/checkpoint-9`
     parser.add_argument('--model_path', default='', help='Location to pre-trained model')
-    parser.add_argument('--gpu-use', default=0.66, type=float, help="Usage of GPU by RLLib")
 
     return parser.parse_args()
 

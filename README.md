@@ -28,6 +28,8 @@ pip install 'ray[default]'
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/small_loop_only_duckies.yaml -P /home/$USER/anaconda3/envs/robotics-project/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 
+pip install -e .
+
 # Optional: Install Tensorboard (useful for visualizing training progression)
 pip install tensorflow tensorboard
 ```
@@ -40,6 +42,8 @@ pip install -r requirements.txt
 
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/loop_only_duckies.yaml -P $VIRTUAL_ENV/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
 wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_duckietown/maps/small_loop_only_duckies.yaml -P /$VIRTUAL_ENV/lib/python3.8/site-packages/duckietown_world/data/gd1/maps/
+
+pip install -e .
 ```
 
 ## Checking setup
