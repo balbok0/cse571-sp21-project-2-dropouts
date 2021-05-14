@@ -1,8 +1,6 @@
 import argparse
 from dropouts_project.models.torch_model_to_rllib import RLLibTorchModel
 from gym_duckietown.envs.multimap_env import MultiMapEnv
-from gym_duckietown.envs.duckietown_env import DuckietownLF
-from gym_duckietown.wrappers import SteeringToWheelVelWrapper
 import ray
 from ray.tune.registry import register_env
 from ray.rllib.agents.ddpg import DDPGTrainer
@@ -12,38 +10,14 @@ from tqdm import trange
 import time
 import os
 import numpy as np
-from dropouts_project import ImageCritic, RLLibTorchModel
+from dropouts_project import ImageCritic, RLLibTorchModel, MultiMapSteeringToWheelVelWrapper
 import pandas as pd
-from torch import nn
-from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 
 
 class DDPGRLLibModel(RLLibTorchModel):
     @staticmethod
     def base_model_generator():
         return ImageCritic(256, 256)
-
-
-# class RLLibTorchModel(TorchModelV2, nn.Module):
-#     """
-#     This is basically a wraper around ImageCritic that satisfies requirements of rllib.
-#     """
-
-#     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
-#         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
-#         nn.Module.__init__(self)
-
-#         self.base_model = ImageCritic(2, 1)
-#         self._value = None
-
-#     def forward(self, input_dict, state, seq_lens):
-#         # Structure of this forward is due to TorchModelV2.
-#         # Note that we do not immediately return value, but rather save it for `value_function`
-#         model_out, self._value = self.base_model(input_dict["obs"])
-#         return model_out, state
-
-#     def value_function(self):
-#         return self._value
 
 
 def train_model(args, config):
@@ -98,7 +72,7 @@ def evaluate_model(args):
         # Simulator env uses a single map, so better for evaluation/testing.
         # return SteeringToWheelVelWrapper(DuckietownLF(
         # ))
-        return SteeringToWheelVelWrapper(simulator.Simulator(
+        return MultiMapSteeringToWheelVelWrapper(simulator.Simulator(
             map_name=args.map,
             max_steps=2000,
         ))
@@ -159,7 +133,7 @@ if __name__ == '__main__':
         "image-ddpg", DDPGRLLibModel,
     )
 
-    register_env("DuckieTown-MultiMap", lambda _: SteeringToWheelVelWrapper(DuckietownLF()))
+    register_env("DuckieTown-MultiMap", lambda _: MultiMapSteeringToWheelVelWrapper(MultiMapEnv()))
 
     csv_path = "searches/ddpg_results.csv"
     starting_idx = 0
