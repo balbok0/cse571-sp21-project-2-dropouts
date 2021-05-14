@@ -45,7 +45,7 @@ wget https://raw.githubusercontent.com/duckietown/gym-duckietown/daffy/src/gym_d
 ## Checking setup
 If everything got installed properly
 ```
-python examples/discrete_dqn.py
+python -m examples.discrete_dqn
 ```
 
 If you also installed tensorboard running:
@@ -62,11 +62,21 @@ The notebook is also accessible here: https://colab.research.google.com/drive/1F
 
 ## Evaluation
 
-We don't yet have graphing and support for quantitative evaluation. Evaluation should be done locally if you are rendering the simulator, though you can add support to ignore rendering for cloud evaluation.
+### Training
+
+Each agent/model logs the results for each epoch of training using a `plotter.Plotter()` object. At the end of a training run there is a plot saved to the directory which you executed from.
+
+You can also manually generate a plot from just the saved reward history data by running:
+```
+python plotter.py <path_to_file.txt>
+```
+
+### Model Evaluation
+Evaluation should be done locally if you are rendering the simulator, though you can add support to ignore rendering for cloud evaluation.
 
 To evaluate a trained model (only DQN supported right now) look at the available flags:
 ```
-$ python examples/discrete_dqn.py -h
+$ python -m examples.discrete_dqn -h
 
 usage: discrete_dqn.py [-h] [--eval] [--epochs EPOCHS] [--model_path MODEL_PATH] [--map MAP]
 
@@ -81,7 +91,7 @@ optional arguments:
 
 For example we can train on the default map using the provided baseline model with:
 ```
-$ python examples/discrete_dqn.py --eval --model_path trained_models/dqn_v0/model
+$ python -m examples.discrete_dqn --eval --model_path trained_models/dqn_v0/model
 ```
 
 The baseline model is terrible, you should see it go around in circles slowly.

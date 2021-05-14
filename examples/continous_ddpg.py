@@ -12,6 +12,8 @@ import torch
 from torch import nn
 from tqdm import trange
 
+import plotter
+
 
 class ImageCritic(nn.Module):
     def __init__(self):
@@ -115,11 +117,13 @@ def train_model(args):
     if args.model_path:
         trainer.restore(args.model_path)
 
+    plot = plotter.Plotter('ddpg_agent')
     for i in range(args.epochs):  # Number of episodes (basically epochs)
         print(f'----------------------- Starting epoch {i} ----------------------- ')
         # train() trains only a single episode
         result = trainer.train()
         print(result)
+        plot.add_results(result)
 
         # Save model so far.
         checkpoint_path = trainer.save()
@@ -129,6 +133,8 @@ def train_model(args):
         torch.cuda.empty_cache()
         # Debug log to monitor memory.
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
+
+    plot.plot('DDPG DuckieTown-MultiMap')
 
 
 def evaluate_model(args):

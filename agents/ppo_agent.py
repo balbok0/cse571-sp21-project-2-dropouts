@@ -12,6 +12,8 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch
 from torch import nn
 
+import plotter
+
 
 class ImageCritic(nn.Module):
     def __init__(self):
@@ -116,11 +118,17 @@ def train_model(args):
         }
     )
 
+    # Start training from a checkpoint, if available.
+    if args.model_path:
+        trainer.restore(args.model_path)
+
+    plot = plotter.Plotter('ppo_agent')
     for i in range(args.epochs):  # Number of episodes (basically epochs)
         print(f'----------------------- Starting epoch {i} ----------------------- ')
         # train() trains only a single episode
         result = trainer.train()
         print(result)
+        plot.add_results(result)
 
         # Save model so far.
         checkpoint_path = trainer.save()
@@ -130,6 +138,8 @@ def train_model(args):
         torch.cuda.empty_cache()
         # Debug log to monitor memory.
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
+
+    plot.plot('PPO DuckieTown-MultiMap')
 
 
 def evaluate_model(args):
