@@ -1,3 +1,4 @@
 from .models import ImageCritic, RLLibTorchModel
+from .wrappers import MultiMapSteeringToWheelVelWrapper
 
-__all__ = ["ImageCritic", "RLLibTorchModel"]
+__all__ = ["ImageCritic", "MultiMapSteeringToWheelVelWrapper", "RLLibTorchModel"]
