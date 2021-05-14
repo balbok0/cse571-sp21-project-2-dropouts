@@ -20,6 +20,8 @@ import numpy as np
 import pandas as pd
 import os
 from tqdm import trange
+import time
+
 
 class ImageCritic(nn.Module):
     def __init__(self):
@@ -68,7 +70,8 @@ class ImageCritic(nn.Module):
 
     def forward(self, x):
         # x = torch.tensor(x.transpose(3, 1), dtype=torch.float16)
-        x = x.transpose(3, 1).float()
+        # x -> (N, C, H, W) with range [-1, 1]
+        x = (x.transpose(3, 1).float() / 255. - 0.5) * 2
         x = self.common(x)
         a = self.agent(x)
         v = self.critic(x)
@@ -137,7 +140,7 @@ def train_model(args, config):
         # Cleanup CUDA memory to reduce memory usage.
         torch.cuda.empty_cache()
         # Debug log to monitor memory.
-        print(torch.cuda.memory_summary(device=None, abbreviated=False))
+        # print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
     return best_mean_reward, epoch_of_best_mean_reward, path_of_best_mean_reward
 
@@ -168,7 +171,7 @@ if __name__ == '__main__':
     # Names can be anything.
     register_env("DuckieTown-MultiMap", lambda _: DiscreteWrapper(MultiMapEnv()))
 
-    csv_path = "searches/results.csv"
+    csv_path = "searches/dqn_results.csv"
     starting_idx = 0
     if os.path.exists(csv_path):
         with open(csv_path, mode="r") as f:
@@ -193,39 +196,44 @@ if __name__ == '__main__':
             # "output": None,
             "compress_observations": True,
             "num_workers": 0,
-            "num_gpus": 0.75,
+            "num_gpus": 0.66,
             "rollout_fragment_length": 50,
             "log_level": "ERROR",
         }
 
         additional_params = {}
 
-        lr = 10 ** np.random.uniform(-5, -3.25)
+        lr = 10 ** np.random.uniform(-6, -3.25)
         additional_params["learning_starts"] = np.random.choice(list(range(100, 1001, 100)))
         additional_params["grad_clip"] = np.random.choice([None, 10, 20, 30, 40, 50, 60, 80])
-        # additional_params["dueling"] = np.random.choice([True, False])
+        additional_params["dueling"] = np.random.choice([True, False])
         additional_params["lr"] = lr
         additional_params["lr_schedule"] = [(0, lr), (args.epochs * config["buffer_size"], lr / 1000.)]
 
         for k, v in additional_params.items():
             config[k] = v
 
-        best_mean_reward, best_epoch, best_path = train_model(args, config)
+        try:
+            best_mean_reward, best_epoch, best_path = train_model(args, config)
 
-        additional_params["best_mean_reward"] = best_mean_reward
-        additional_params["best_epoch"] = best_epoch
-        additional_params["best_path"] = best_path
+            additional_params["best_mean_reward"] = best_mean_reward
+            additional_params["best_epoch"] = best_epoch
+            additional_params["best_path"] = best_path
 
-        # No need to save lr_schedule, since it's deterministic on lr
-        del additional_params["lr_schedule"]
+            # No need to save lr_schedule, since it's deterministic on lr
+            del additional_params["lr_schedule"]
 
-        params_for_df = {}
-        for k, v in additional_params.items():
-            params_for_df[k] = [v]
+            params_for_df = {}
+            for k, v in additional_params.items():
+                params_for_df[k] = [v]
 
-
-        pd.DataFrame.from_dict(params_for_df).to_csv(
-            csv_path,
-            mode="a" if os.path.exists(csv_path) else "w",
-            header=not os.path.exists(csv_path)
-        )
+            pd.DataFrame.from_dict(params_for_df).to_csv(
+                csv_path,
+                mode="a" if os.path.exists(csv_path) else "w",
+                header=not os.path.exists(csv_path)
+            )
+        except RuntimeError:
+            # Not enough memory on GPU. Might be bad config, or a CUDA not keeping up. Give it few seconds.
+            time.sleep(5)
+        finally:
+            torch.cuda.empty_cache()
