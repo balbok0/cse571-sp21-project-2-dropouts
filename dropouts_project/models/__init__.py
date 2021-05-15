@@ -1,4 +1,4 @@
-from .torch_models import ImageCritic
+from .torch_models import DuckieTownGymModel, ImageCritic
 from .torch_model_to_rllib import RLLibTorchModel
 
-__all__ = ["ImageCritic", "RLLibTorchModel"]
+__all__ = ["DuckieTownGymModel", "ImageCritic", "RLLibTorchModel"]
