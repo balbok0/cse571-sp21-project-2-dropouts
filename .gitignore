@@ -1,6 +1,10 @@
 # vscode
 .vscode
 
+# Runs
+nohup.out
+searches/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
