@@ -1,5 +1,6 @@
 from .models import DuckieTownGymModel, ImageCritic, RLLibTorchModel
 from .wrappers import (
+    CustomRewardWrapper,
     MultiMapSteeringToWheelVelWrapper,
     MotionBlurWrapper,
     ResizeWrapper,
@@ -12,8 +13,9 @@ from .wrappers import (
 __all__ = [
     "DuckieTownGymModel",
     "ImageCritic",
-    "MultiMapSteeringToWheelVelWrapper",
     "RLLibTorchModel",
+    "MultiMapSteeringToWheelVelWrapper",
+    "CustomRewardWrapper",
     "MotionBlurWrapper",
     "ResizeWrapper",
     "DtRewardWrapper",

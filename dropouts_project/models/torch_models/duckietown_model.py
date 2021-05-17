@@ -34,8 +34,8 @@ class DuckieTownGymModel(nn.Module):
         self.lin1 = nn.Linear(flat_size, 512)
         self.lin2 = nn.Linear(512, action_dim)
 
-        self.critic_lin1 = nn.Linear(flat_size, 128)
-        self.critic_lin2 = nn.Linear(128, critic_dim)
+        self.critic_lin1 = nn.Linear(flat_size, 512)
+        self.critic_lin2 = nn.Linear(512, critic_dim)
 
         self.max_action = max_action
 

@@ -1,7 +1,7 @@
 import argparse
 
 from gym_duckietown import simulator
-from gym_duckietown.envs.multimap_env import MultiMapEnv
+from gym_duckietown.envs import MultiMapEnv, DuckietownEnv
 from gym_duckietown.wrappers import DiscreteWrapper
 import ray
 from ray.tune.registry import register_env
@@ -10,7 +10,7 @@ from ray.rllib.models import ModelCatalog
 import torch
 
 import plotter
-from dropouts_project import ImageCritic, RLLibTorchModel
+from dropouts_project import ImageCritic, RLLibTorchModel, CustomRewardWrapper
 
 
 class RLLibDQNCritic(RLLibTorchModel):
@@ -22,7 +22,8 @@ class RLLibDQNCritic(RLLibTorchModel):
 def train_model(args):
     # We are using custom model and environment, which need to be registered in ray/rllib
     # Names can be anything.
-    register_env("DuckieTown-MultiMap", lambda _: DiscreteWrapper(MultiMapEnv()))
+    register_env("DuckieTown-MultiMap", lambda _: CustomRewardWrapper(DiscreteWrapper(MultiMapEnv())))
+    register_env("DuckieTown-LoopEmpty", lambda _: CustomRewardWrapper(DiscreteWrapper(DuckietownEnv(map_name="loop_empty"))))
 
     # Define trainer. Apart from env, config/framework and config/model, which are common among trainers.
     # Here is a list of default config keys/values:
@@ -30,7 +31,7 @@ def train_model(args):
     # For DQN specifically there are also additionally these keys:
     # https://docs.ray.io/en/master/rllib-algorithms.html#dqn
     trainer = DQNTrainer(
-        env="DuckieTown-MultiMap",
+        env="DuckieTown-LoopEmpty",
         config={
             "framework": "torch",
             "model": {
@@ -87,10 +88,10 @@ def evaluate_model(args):
     def get_env():
         # Simulator env uses a single map, so better for evaluation/testing.
         # DiscreteWrapper just converts wheel velocities to high level discrete actions.
-        return DiscreteWrapper(simulator.Simulator(
+        return CustomRewardWrapper(DiscreteWrapper(simulator.Simulator(
             map_name=args.map,
             max_steps=2000,
-        ))
+        )))
 
     # Rather than reuse the env, another one is created later because I can't
     # figure out how to provide register_env with an object, th

@@ -1,3 +1,4 @@
+from .custom_reward_wrapper import CustomRewardWrapper
 from .duckietown_wrappers import (
     MotionBlurWrapper,
     ResizeWrapper,
@@ -9,6 +10,7 @@ from .duckietown_wrappers import (
 from .multimap_steering_to_wheel_vel_wrapper import MultiMapSteeringToWheelVelWrapper
 
 __all__ = [
+    "CustomRewardWrapper",
     "MotionBlurWrapper",
     "ResizeWrapper",
     "DtRewardWrapper",
