@@ -11,6 +11,7 @@ PROXIMITY_MULTIPLIER = 2.0
 ANGLE_MULTIPLIER = 2.0
 SPEED_MULTIPLIER = 0.5
 
+# TURN TO True if you want to debug/see logging
 DO_PRINTS = False
 
 
@@ -22,23 +23,30 @@ class CustomRewardWrapper(gym.RewardWrapper):
         self.total_episode_reward = 0
 
     def reward(self, reward):
+        # Get DuckieTown Environment.
         if isinstance(self.unwrapped, MultiMapEnv):
             env = self.unwrapped.env_list[self.unwrapped.cur_env_idx]
         else:
             env = self.unwrapped
 
+        # Reset Reward if env was .reset()
         if env.timestamp == 0:
             self.total_episode_reward += 0
 
+        # Define baseline
+        # NOTE(balbok0): We might want to reward longer timestamps, but it might skew reward towards later choices.
         custom_reward = 0  # env.timestamp
 
         if reward == REWARD_INVALID_POSE:
             # INVALID POSE LOSS
+            # We want to make loss for the whole episode negative, so we subtract the loss of the whole episode.
             custom_reward = -self.total_episode_reward - SUBTRACT_FOR_INVALID_POSE
             self.print("INValid Pose")
         else:
+            # Proximity to duckies
             reward -= PROXIMITY_MULTIPLIER * env.proximity_penalty2(env.cur_pos, env.cur_angle)
             try:
+                # In Lane
                 lp = env.get_lane_pos2(env.cur_pos, env.cur_angle)
 
                 speed_reward = SPEED_MULTIPLIER * env.speed * lp.dot_dir
@@ -48,12 +56,14 @@ class CustomRewardWrapper(gym.RewardWrapper):
                 custom_reward += speed_reward + dist_reward + angle_reward
                 self.print("Valid Lane")
             except NotInLane:
+                # Out of Lane
                 self.print("INValid Lane")
                 custom_reward -= SUBTRACT_FOR_INVALID_LANE
 
         self.print(f"Reward: {custom_reward}")
         self.print("")
 
+        # Log reward for a given episode (until next .reset())
         self.total_episode_reward += custom_reward
 
         return custom_reward
