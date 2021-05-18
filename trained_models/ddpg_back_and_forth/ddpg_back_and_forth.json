@@ -1,0 +1,15 @@
+{
+    "framework": "torch",
+    "model": {
+        "custom_model": "image-ddpg"
+    },
+    "learning_starts": 0,
+    "train_batch_size": 16,
+    "buffer_size": 1000,
+    "actor_hiddens": [],
+    "critic_hiddens": [],
+    "compress_observations": true,
+    "num_workers": 0,
+    "num_gpus": 0.66,
+    "log_level": "ERROR"
+}

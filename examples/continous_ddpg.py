@@ -8,7 +8,7 @@ from ray.rllib.agents.ddpg import DDPGTrainer
 from ray.rllib.models import ModelCatalog
 import torch
 
-from dropouts_project import ImageCritic, RLLibTorchModel, MultiMapSteeringToWheelVelWrapper
+from dropouts_project import ImageCritic, RLLibTorchModel, MultiMapSteeringToWheelVelWrapper, CustomRewardWrapper
 import plotter
 
 
@@ -69,10 +69,10 @@ def evaluate_model(args):
         # Simulator env uses a single map, so better for evaluation/testing.
         # return SteeringToWheelVelWrapper(DuckietownLF(
         # ))
-        return MultiMapSteeringToWheelVelWrapper(simulator.Simulator(
+        return CustomRewardWrapper(MultiMapSteeringToWheelVelWrapper(simulator.Simulator(
             map_name=args.map,
-            max_steps=2000,
-        ))
+            max_steps=75,
+        )))
 
     # Rather than reuse the env, another one is created later because I can't
     # figure out how to provide register_env with an object, th
@@ -84,7 +84,6 @@ def evaluate_model(args):
             "model": {
                 "custom_model": "image-ddpg",
             },
-            "num_gpus": args.gpu_use,
         },
     )
     trainer.restore(args.model_path)
@@ -127,7 +126,7 @@ if __name__ == '__main__':
     ray.init()
     # NOTE: We are using DuckietownLF environment because SteeringToWheelVelWrapper does not cooperate with multimap.
     ModelCatalog.register_custom_model("image-ddpg", DDPGRLLibModel)
-    register_env("DuckieTown-MultiMap", lambda _: MultiMapSteeringToWheelVelWrapper(MultiMapEnv()))
+    register_env("DuckieTown-MultiMap", lambda _: CustomRewardWrapper(MultiMapSteeringToWheelVelWrapper(MultiMapEnv())))
 
     if args.eval:
         evaluate_model(args)
